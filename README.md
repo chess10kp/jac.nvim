@@ -1,48 +1,56 @@
 # jac.nvim
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Lua](https://img.shields.io/badge/Lua-5.1-blue.svg)](https://www.lua.org)
+
 Neovim plugin for the [Jac](https://docs.jaseci.org) programming language by [Jaseci Labs](https://jaseci.org).
 
-Automatically detects `.jac` files and starts the built-in Jac language server for LSP support (completions, diagnostics, hover, go-to-definition, etc.).
+Automatically detects `.jac` files, starts the Jac language server, and enables Tree-sitter highlighting.
 
 ## Features
 
 - 🔍 **Filetype detection** for all Jac extensions: `.jac`, `.sv.jac`, `.cl.jac`, `.na.jac`, `.impl.jac`, `.test.jac`
 - 🚀 **Auto-start LSP** — no manual configuration needed
+- 🌳 **Tree-sitter integration** — syntax highlighting, code folding, and text objects
 - ⚙️ **Customizable** — pass `on_attach`, `capabilities`, and other LSP options
 
 ## Requirements
 
 - Neovim ≥ 0.8.0
-- [nvim-lspconfig](https://github.com/neovim/nvim-lspconfig)
 - [jaclang](https://pypi.org/project/jaclang/) installed and available in PATH:
   ```bash
   pip install jaclang
   ```
+- `curl`, `tar`, and a C compiler (cc, gcc, or clang) if using `auto_install`
 
 ## Installation
 
-### Using [lazy.nvim](https://github.com/folke/lazy.nvim)
+```bash
+pip install jaclang
+```
+
+### lazy.nvim
 
 ```lua
 {
-  "your-username/jac.nvim",
-  dependencies = { "neovim/nvim-lspconfig" },
+  "chess10kp/jac.nvim",
+  ft = "jac",
+  dependencies = {
+    "neovim/nvim-lspconfig", -- optional
+  },
   config = function()
     require("jac").setup({
-      -- optional: override defaults
-      -- auto_start = true,        -- auto-start LSP (default: true)
-      -- on_attach = my_on_attach, -- custom LSP on_attach
-      -- capabilities = my_caps,   -- from nvim-cmp
+      treesitter = { auto_install = true }, -- auto-install parser
     })
   end,
 }
 ```
 
-### Using [packer.nvim](https://github.com/wbthomason/packer.nvim)
+### packer.nvim
 
 ```lua
 use {
-  "your-username/jac.nvim",
+  "chess10kp/jac.nvim",
   requires = { "neovim/nvim-lspconfig" },
   config = function()
     require("jac").setup()
@@ -50,103 +58,37 @@ use {
 }
 ```
 
-### Using [vim-plug](https://github.com/junegunn/vim-plug)
+### vim-plug
 
 ```vim
 Plug 'neovim/nvim-lspconfig'
-Plug 'your-username/jac.nvim'
+Plug 'chess10kp/jac.nvim'
 
 lua << EOF
 require("jac").setup()
 EOF
 ```
 
-## Completion Plugin Integration
-
-### nvim-cmp
-
-**Option A — One-liner in setup:**
-
-```lua
-require("jac").setup({
-  cmp = true,  -- auto-detects cmp_nvim_lsp and wires up capabilities
-})
-```
-
-**Option B — Standalone module:**
+## Usage
 
 ```lua
 require("jac").setup()
-require("jac.cmp").setup()
 ```
 
-**Option C — Manual capabilities:**
+This provides:
+- Automatic LSP startup for `.jac` files
+- Tree-sitter highlighting (when parser is installed)
 
-```lua
-local capabilities = require("cmp_nvim_lsp").default_capabilities()
-require("jac").setup({ capabilities = capabilities })
+### Manual parser installation
+
+```vim
+:lua require("jac.treesitter").install()
 ```
-
-### blink.cmp
-
-**Option A — One-liner in setup:**
-
-```lua
-require("jac").setup({
-  blink = true,  -- auto-detects blink.cmp and wires up capabilities
-})
-```
-
-**Option B — Standalone module:**
-
-```lua
-require("jac").setup()
-require("jac.blink").setup()
-```
-
-**Option C — Manual capabilities:**
-
-```lua
-local capabilities = require("blink.cmp").get_lsp_capabilities()
-require("jac").setup({ capabilities = capabilities })
-```
-
-### Advanced: Custom capabilities
-
-To merge custom capabilities on top of completion defaults:
-
-```lua
--- nvim-cmp
-require("jac").setup({
-  cmp = { capabilities = my_custom_capabilities },
-})
-
--- blink.cmp
-require("jac").setup({
-  blink = { capabilities = my_custom_capabilities },
-})
-```
-
-### coq_nvim
-
-**Option A — One-liner in setup:**
-
-```lua
-require("jac").setup({
-  coq = true,  -- wraps LSP setup with coq.lsp_ensure_capabilities()
-})
-```
-
-**Option B — Standalone module:**
-
-```lua
-require("jac").setup()
-require("jac.coq").setup()
-```
-
-**Note:** coq_nvim uses `coq.lsp_ensure_capabilities()` which wraps the entire LSP server setup table (not just capabilities). jac.nvim handles this automatically when `coq = true` or `jac.coq.setup()` is called.
 
 ## Configuration
+
+<details>
+<summary>Advanced configuration</summary>
 
 ```lua
 require("jac").setup({
@@ -164,51 +106,81 @@ require("jac").setup({
   -- LSP server settings
   settings = {},
 
-  -- LSP client flags
-  flags = {},
-
-  -- nvim-cmp integration (default: false)
-  cmp = true,
-
-  -- blink.cmp integration (default: false)
-  blink = true,
-
-  -- coq_nvim integration (default: false)
-  coq = true,
+  -- Tree-sitter integration (default: true)
+  treesitter = true,
 })
 ```
 
-## Plugin Structure
+</details>
 
-```
-jac.nvim/
-├── ftdetect/jac.lua       # Filetype detection (.jac, .sv.jac, etc.)
-├── ftplugin/jac.lua       # Filetype-specific settings (indent, comments)
-├── syntax/jac.vim          # Syntax highlighting (Vim regex)
-├── lua/jac/init.lua       # Main setup() with user config
-├── lua/jac/lsp.lua        # LSP registration and auto-start
-├── lua/jac/cmp.lua        # nvim-cmp integration
-├── lua/jac/blink.lua      # blink.cmp integration
-├── lua/jac/coq.lua        # coq_nvim integration
-├── plugin/jac.lua         # Auto-load entry point
-├── test/sample.jac        # Sample Jac file for testing
-└── test/init_test.lua     # Minimal test config
+## Completion Plugin Integration
+
+<details>
+<summary>nvim-cmp</summary>
+
+```lua
+require("jac").setup({
+  cmp = true,  -- auto-detects cmp_nvim_lsp and wires up capabilities
+})
 ```
 
-## How It Works
+Or manually:
+```lua
+local capabilities = require("cmp_nvim_lsp").default_capabilities()
+require("jac").setup({ capabilities = capabilities })
+```
 
-1. `ftdetect/jac.lua` registers all Jac file extensions as `jac` filetype
-2. When a `.jac` file is opened, an autocmd fires
-3. `lua/jac/lsp.lua` registers `jac_ls` with `nvim-lspconfig` and starts the server via `jac lsp`
-4. Completion plugins (nvim-cmp / blink.cmp / coq_nvim) are auto-configured if `cmp = true`, `blink = true`, or `coq = true`
-5. The LSP server handles completions, diagnostics, hover, go-to-definition, references, etc.
+</details>
 
-## Manual LSP Start
+<details>
+<summary>blink.cmp</summary>
 
-If you disable `auto_start`, you can start the LSP manually:
+```lua
+require("jac").setup({
+  blink = true,  -- auto-detects blink.cmp and wires up capabilities
+})
+```
+
+Or manually:
+```lua
+local capabilities = require("blink.cmp").get_lsp_capabilities()
+require("jac").setup({ capabilities = capabilities })
+```
+
+</details>
+
+<details>
+<summary>coq_nvim</summary>
+
+```lua
+require("jac").setup({
+  coq = true,  -- wraps LSP setup with coq.lsp_ensure_capabilities()
+})
+```
+
+</details>
+
+## Tree-sitter Features
+
+The Jac parser provides:
+- **Syntax highlighting** — including f-string interpolations & JSX
+- **Code folding** — `foldmethod=expr` folding
+- **Local variables** — scopes & definitions
+- **Language injections** — embedded Python in `::py::` blocks
+
+### Folding setup
+
+```lua
+vim.opt_local.foldmethod = "expr"
+vim.opt_local.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+```
+
+### Note on embedded languages
+
+For embedded Python highlighting, ensure you have the Python Tree-sitter parser installed:
 
 ```vim
-:lua require("jac.lsp").start()
+:TSInstall python
 ```
 
 ## License
