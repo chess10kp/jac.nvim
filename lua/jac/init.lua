@@ -12,6 +12,7 @@ local M = {}
 ---@field cmp? boolean|table Auto-configure nvim-cmp integration (default: false). Set to `true` for defaults, or pass a table with `{ capabilities = ... }` to customize.
 ---@field blink? boolean|table Auto-configure blink.cmp integration (default: false). Set to `true` for defaults, or pass a table with `{ capabilities = ... }` to customize.
 ---@field coq? boolean Auto-configure coq_nvim integration (default: false). Set to `true` to wrap LSP setup with coq.lsp_ensure_capabilities().
+---@field treesitter? boolean|table Auto-configure nvim-treesitter integration (default: false). Set to `true` for defaults, or pass a table with `{ auto_install = true }` to auto-install the parser.
 
 M.config = {
   auto_start = true,
@@ -22,6 +23,7 @@ M.config = {
   cmp = false,
   blink = false,
   coq = false,
+  treesitter = false,
 }
 
 -- Internal flag to track whether setup has been called
@@ -96,6 +98,27 @@ local function setup_coq(coq_opts)
   M.config.coq = true
 end
 
+---Attempt to auto-wire nvim-treesitter integration.
+---@param treesitter_opts boolean|table User-provided treesitter option
+local function setup_treesitter(treesitter_opts)
+  if not treesitter_opts then
+    return
+  end
+
+  local ok, treesitter = pcall(require, "jac.treesitter")
+  if not ok then
+    vim.notify(
+      "[jac.nvim] Failed to load jac.treesitter module.",
+      vim.log.levels.ERROR
+    )
+    return
+  end
+
+  -- Convert boolean to table if needed
+  local opts = type(treesitter_opts) == "table" and treesitter_opts or {}
+  treesitter.setup(opts)
+end
+
 ---Setup jac.nvim with user configuration.
 ---Call this from your init.lua to configure the plugin.
 ---
@@ -110,22 +133,26 @@ end
 ---   cmp = true,
 ---   -- or blink.cmp integration:
 ---   blink = true,
+---   -- or nvim-treesitter integration:
+---   treesitter = true,
 --- })
 ---```
 ---@param opts? jac.Config
 function M.setup(opts)
   opts = opts or {}
 
-  -- Extract cmp/blink/coq opts before merging (so they don't stay in config)
+  -- Extract cmp/blink/coq/treesitter opts before merging (so they don't stay in config)
   local cmp_opts = opts.cmp
   local blink_opts = opts.blink
   local coq_opts = opts.coq
+  local treesitter_opts = opts.treesitter
 
   -- Shallow-copy opts to avoid mutating the caller's table
   local filtered_opts = vim.tbl_deep_extend("keep", {}, opts)
   filtered_opts.cmp = nil
   filtered_opts.blink = nil
   filtered_opts.coq = nil
+  filtered_opts.treesitter = nil
 
   M.config = vim.tbl_deep_extend("keep", M.config, filtered_opts)
 
@@ -133,6 +160,7 @@ function M.setup(opts)
   setup_cmp(cmp_opts)
   setup_blink(blink_opts)
   setup_coq(coq_opts)
+  setup_treesitter(treesitter_opts)
 
   -- Create an autocmd group for jac.nvim
   local group = vim.api.nvim_create_augroup("JacNvim", { clear = true })
