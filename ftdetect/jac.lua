@@ -1,15 +1,8 @@
--- Filetype detection for Jac programming language
--- Detects all Jac file extensions: .jac, .sv.jac, .cl.jac, .na.jac, .impl.jac, .test.jac
+-- Filetype detection for Jac.
+-- A single `extension` rule covers `*.jac` and every flavored variant
+-- (`*.impl.jac`, `*.cl.jac`, `*.sv.jac`, `*.na.jac`, `*.test.jac`) because
+-- Neovim keys on the final extension, which is always `jac`.
 
 vim.filetype.add({
-  extension = {
-    jac = "jac",
-  },
-  pattern = {
-    ["%.sv%.jac$"] = "jac",
-    ["%.cl%.jac$"] = "jac",
-    ["%.na%.jac$"] = "jac",
-    ["%.impl%.jac$"] = "jac",
-    ["%.test%.jac$"] = "jac",
-  },
+  extension = { jac = "jac" },
 })

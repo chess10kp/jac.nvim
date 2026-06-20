@@ -16,7 +16,7 @@ if not has_coq then
   vim.notify("[test] coq_nvim not found — completions won't be tested", vim.log.levels.WARN)
 end
 if not has_lspconfig then
-  vim.notify("[test] nvim-lspconfig not found — LSP won't work", vim.log.levels.ERROR)
+  vim.notify("[test] nvim-lspconfig not found — jac.nvim will fall back to vim.lsp.start", vim.log.levels.WARN)
 end
 
 -- Setup jac.nvim with coq_nvim integration

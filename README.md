@@ -16,12 +16,13 @@ Automatically detects `.jac` files, starts the Jac language server, and enables 
 
 ## Requirements
 
-- Neovim ≥ 0.8.0
+- Neovim ≥ 0.8.0 (Neovim 0.12+ recommended for built-in Tree-sitter support)
 - [jaclang](https://pypi.org/project/jaclang/) installed and available in PATH:
   ```bash
   pip install jaclang
   ```
 - `curl`, `tar`, and a C compiler (cc, gcc, or clang) if using `auto_install`
+- [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter) (only for Neovim < 0.12)
 
 ## Installation
 
@@ -37,10 +38,15 @@ pip install jaclang
   ft = "jac",
   dependencies = {
     "neovim/nvim-lspconfig", -- optional
+    -- Only needed for Neovim < 0.12
+    vim.fn.has("nvim-0.12") == 0 and { "nvim-treesitter/nvim-treesitter" } or nil,
   },
+  -- Setup is handled automatically in after/plugin/jac.lua
+  -- Only call setup() if you want to customize configuration
   config = function()
     require("jac").setup({
       treesitter = { auto_install = true }, -- auto-install parser
+      blink = true, -- or cmp = true for nvim-cmp
     })
   end,
 }
@@ -52,32 +58,37 @@ pip install jaclang
 use {
   "chess10kp/jac.nvim",
   requires = { "neovim/nvim-lspconfig" },
-  config = function()
-    require("jac").setup()
-  end,
+  -- Only needed for Neovim < 0.12
+  vim.fn.has("nvim-0.12") == 0 and { "nvim-treesitter/nvim-treesitter" } or nil,
 }
+-- Setup is handled automatically in after/plugin/jac.lua
+-- Only call setup() if you want to customize configuration
 ```
 
 ### vim-plug
 
 ```vim
+" Only needed for Neovim < 0.12
+if has('nvim-0.12') == 0
+  Plug 'nvim-treesitter/nvim-treesitter'
+endif
+
 Plug 'neovim/nvim-lspconfig'
 Plug 'chess10kp/jac.nvim'
 
-lua << EOF
-require("jac").setup()
-EOF
+" Setup is handled automatically in after/plugin/jac.lua
+" Only call setup() if you want to customize configuration
 ```
 
 ## Usage
 
-```lua
-require("jac").setup()
-```
+The plugin is automatically configured when you open a `.jac` file. No manual setup required.
 
 This provides:
 - Automatic LSP startup for `.jac` files
 - Tree-sitter highlighting (when parser is installed)
+
+If you want to customize the configuration, call `require("jac").setup()` in your init.lua with your options.
 
 ### Manual parser installation
 
@@ -162,6 +173,10 @@ require("jac").setup({
 
 ## Tree-sitter Features
 
+**Neovim 0.12+**: Tree-sitter highlighting is built-in and works out of the box. No plugin installation required.
+
+**Neovim < 0.12**: Install the [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter) plugin to enable Tree-sitter features.
+
 The Jac parser provides:
 - **Syntax highlighting** — including f-string interpolations & JSX
 - **Code folding** — `foldmethod=expr` folding
@@ -179,6 +194,12 @@ vim.opt_local.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 
 For embedded Python highlighting, ensure you have the Python Tree-sitter parser installed:
 
+**Neovim 0.12+**:
+```vim
+:TSInstall python
+```
+
+**Neovim < 0.12** (with nvim-treesitter):
 ```vim
 :TSInstall python
 ```

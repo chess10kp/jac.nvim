@@ -12,7 +12,7 @@ local M = {}
 ---@field cmp? boolean|table Auto-configure nvim-cmp integration (default: false). Set to `true` for defaults, or pass a table with `{ capabilities = ... }` to customize.
 ---@field blink? boolean|table Auto-configure blink.cmp integration (default: false). Set to `true` for defaults, or pass a table with `{ capabilities = ... }` to customize.
 ---@field coq? boolean Auto-configure coq_nvim integration (default: false). Set to `true` to wrap LSP setup with coq.lsp_ensure_capabilities().
----@field treesitter? boolean|table Auto-configure nvim-treesitter integration (default: false). Set to `true` for defaults, or pass a table with `{ auto_install = true }` to auto-install the parser.
+---@field treesitter? boolean|table Auto-configure Neovim Tree-sitter integration (default: true). Set to `true` for defaults, or pass a table with `{ auto_install = true }` to download and install the latest Jac parser release automatically.
 
 M.config = {
   auto_start = true,
@@ -23,7 +23,7 @@ M.config = {
   cmp = false,
   blink = false,
   coq = false,
-  treesitter = false,
+  treesitter = true,
 }
 
 -- Internal flag to track whether setup has been called
@@ -98,7 +98,7 @@ local function setup_coq(coq_opts)
   M.config.coq = true
 end
 
----Attempt to auto-wire nvim-treesitter integration.
+---Attempt to auto-wire Tree-sitter integration.
 ---@param treesitter_opts boolean|table User-provided treesitter option
 local function setup_treesitter(treesitter_opts)
   if not treesitter_opts then
@@ -133,7 +133,7 @@ end
 ---   cmp = true,
 ---   -- or blink.cmp integration:
 ---   blink = true,
----   -- or nvim-treesitter integration:
+---   -- or Tree-sitter integration:
 ---   treesitter = true,
 --- })
 ---```
@@ -154,7 +154,7 @@ function M.setup(opts)
   filtered_opts.coq = nil
   filtered_opts.treesitter = nil
 
-  M.config = vim.tbl_deep_extend("keep", M.config, filtered_opts)
+  M.config = vim.tbl_deep_extend("keep", filtered_opts, M.config)
 
   -- Apply completion plugin integrations
   setup_cmp(cmp_opts)
@@ -166,6 +166,7 @@ function M.setup(opts)
   local group = vim.api.nvim_create_augroup("JacNvim", { clear = true })
 
   -- Auto-start LSP when a jac file is opened
+  -- Note: This autocmd is now mainly for users who call setup() before after/plugin loads
   if M.config.auto_start then
     vim.api.nvim_create_autocmd("FileType", {
       group = group,

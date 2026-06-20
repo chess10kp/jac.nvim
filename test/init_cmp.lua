@@ -20,7 +20,7 @@ if not has_cmp_lsp then
   vim.notify("[test] cmp-nvim-lsp not found — LSP completions won't be tested", vim.log.levels.WARN)
 end
 if not has_lspconfig then
-  vim.notify("[test] nvim-lspconfig not found — LSP won't work", vim.log.levels.ERROR)
+  vim.notify("[test] nvim-lspconfig not found — jac.nvim will fall back to vim.lsp.start", vim.log.levels.WARN)
 end
 
 -- Configure nvim-cmp (only if available)
